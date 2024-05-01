@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $this->call(SymptomSeeder::class);
+        $this->call(RuleSeeder::class);
+
         User::factory(10)->create();
 
         User::factory()->create([
