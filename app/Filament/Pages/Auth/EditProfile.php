@@ -2,11 +2,9 @@
 
 namespace App\Filament\Pages\Auth;
 
-use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
 use Filament\Pages\Auth\EditProfile as BaseEditProfile;
 
 class EditProfile extends BaseEditProfile

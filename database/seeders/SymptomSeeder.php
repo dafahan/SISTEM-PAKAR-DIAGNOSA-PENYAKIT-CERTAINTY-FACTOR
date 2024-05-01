@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Disease;
 use App\Models\Symptom;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SymptomSeeder extends Seeder
@@ -16,16 +15,16 @@ class SymptomSeeder extends Seeder
     {
         Disease::insert([
             [
-                'name' => 'Anorexia Nervosa'
+                'name' => 'Anorexia Nervosa',
             ],
             [
-                'name' => 'Bulimia Nervosa'
+                'name' => 'Bulimia Nervosa',
             ],
             [
-                'name' => 'Binge Eating Disorder'
+                'name' => 'Binge Eating Disorder',
             ],
             [
-                'name' => 'ARFID'
+                'name' => 'ARFID',
             ],
         ]);
 

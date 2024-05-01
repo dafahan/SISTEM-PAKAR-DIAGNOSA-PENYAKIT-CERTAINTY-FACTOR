@@ -7,5 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Rule extends Model
 {
     public $timestamps = false;
+
     protected $guarded = ['id'];
 }
