@@ -55,18 +55,19 @@ class HistoryResource extends Resource
                             ->schema([
                                 TextEntry::make('created_at')
                                     ->label('Created at')
-                                    ->date('Y-m-d'),
+                                    ->date('Y-m-d')
+                                    ->columnSpanFull(),
                                 TextEntry::make('disease.name')
                                     ->label('Diagnosis'),
                                 TextEntry::make('value')
                                     ->label('Value')
-                            ]),
+                            ])->columns(),
                         Tab::make('Analysis')
                             ->schema([
                                 RepeatableEntry::make('details')
                                     ->label(null)
                                     ->schema([
-                                        TextEntry::make('symptom.name'),
+                                        TextEntry::make('disease.name'),
                                         TextEntry::make('value'),
                                     ])
                                     ->columns(2),

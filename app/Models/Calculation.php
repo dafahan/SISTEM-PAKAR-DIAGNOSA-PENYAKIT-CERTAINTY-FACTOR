@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Calculation extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
 
     public function disease(): BelongsTo

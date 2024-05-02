@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CalculationDetail extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
+
+    public $timestamps = false;
 
     public function disease(): BelongsTo
     {
