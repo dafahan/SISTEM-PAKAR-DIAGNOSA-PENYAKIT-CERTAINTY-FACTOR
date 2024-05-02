@@ -30,7 +30,7 @@ class RuleSeeder extends Seeder
                 'disease_id' => 1,
             ],
             [
-                'symptom_id' => 1,
+                'symptom_id' => 4,
                 'disease_id' => 2,
             ],
             [
