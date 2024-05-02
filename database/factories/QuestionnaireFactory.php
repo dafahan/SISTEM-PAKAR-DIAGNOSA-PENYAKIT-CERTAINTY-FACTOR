@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Calculation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,7 +19,7 @@ class QuestionnaireFactory extends Factory
         return [
             'calculation_id' => 1,
             'answer' => fake()->randomElement([0.2, 0.4, 0.6, 0.8, 1]),
-            'symptom_id' => fake()->randomElement([1, 2, 3, 4, 5, 6])
+            'symptom_id' => fake()->randomElement([1, 2, 3, 4, 5, 6]),
         ];
     }
 }

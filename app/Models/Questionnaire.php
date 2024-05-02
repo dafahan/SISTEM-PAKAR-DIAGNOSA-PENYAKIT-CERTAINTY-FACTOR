@@ -14,7 +14,8 @@ class Questionnaire extends Model
 
     protected $guarded = ['id'];
 
-    public function symptom() : BelongsTo {
+    public function symptom(): BelongsTo
+    {
         return $this->belongsTo(Symptom::class);
     }
 }

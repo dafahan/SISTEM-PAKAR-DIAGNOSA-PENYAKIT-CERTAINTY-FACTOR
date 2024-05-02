@@ -5,7 +5,6 @@ namespace App\Filament\User\Resources;
 use App\Filament\User\Resources\HistoryResource\Pages;
 use App\Models\Calculation;
 use Filament\Forms\Form;
-use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\Tabs;
 use Filament\Infolists\Components\Tabs\Tab;
@@ -60,7 +59,7 @@ class HistoryResource extends Resource
                                 TextEntry::make('disease.name')
                                     ->label('Diagnosis'),
                                 TextEntry::make('value')
-                                    ->label('Value')
+                                    ->label('Value'),
                             ])->columns(),
                         Tab::make('Analysis')
                             ->schema([

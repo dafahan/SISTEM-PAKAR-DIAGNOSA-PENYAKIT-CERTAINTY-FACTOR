@@ -13,7 +13,6 @@ use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Arr;
 
 class Calculation extends Page
 {
@@ -43,10 +42,10 @@ class Calculation extends Page
             $tempInputs = [];
             foreach ($chunk as $symptom) {
                 $input = [
-                    TextInput::make('symptom' . $counter)
+                    TextInput::make('symptom'.$counter)
                         ->default($symptom['id'])
                         ->hidden(),
-                    Radio::make('answer' . $counter)
+                    Radio::make('answer'.$counter)
                         ->label($symptom['name'])
                         ->inline()
                         ->required()
@@ -97,7 +96,7 @@ class Calculation extends Page
             $data = $this->data;
 
             for ($i = 0; $i < count($data) / 2; $i++) {
-                $answerKey = 'answer' . $i;
+                $answerKey = 'answer'.$i;
                 array_push($questionaireValue, $data[$answerKey]);
             }
 

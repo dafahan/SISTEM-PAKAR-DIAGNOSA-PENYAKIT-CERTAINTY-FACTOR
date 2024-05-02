@@ -19,7 +19,7 @@ class CalculationDetailFactory extends Factory
         return [
             'calculation_id' => 1,
             'disease_id' => fake()->randomElement([1, 2, 3, 4]),
-            'value' => 0.9
+            'value' => 0.9,
         ];
     }
 }

@@ -19,7 +19,7 @@ class CalculationFactory extends Factory
         return [
             'user_id' => 11,
             'disease_id' => 1,
-            'value' => 0.9
+            'value' => 0.9,
         ];
     }
 }

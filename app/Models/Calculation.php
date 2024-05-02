@@ -18,11 +18,13 @@ class Calculation extends Model
         return $this->belongsTo(Disease::class);
     }
 
-    public function details() : HasMany {
+    public function details(): HasMany
+    {
         return $this->hasMany(CalculationDetail::class);
     }
 
-    public function questionnaires() : HasMany {
+    public function questionnaires(): HasMany
+    {
         return $this->hasMany(Questionnaire::class);
     }
 }
