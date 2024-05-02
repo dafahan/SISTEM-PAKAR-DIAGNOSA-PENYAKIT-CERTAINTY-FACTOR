@@ -31,7 +31,7 @@ class Calculation extends Page
     {
         $symptomps = Symptom::all()->toArray();
 
-        $chunks = array_chunk($symptomps, 4);
+        $chunks = array_chunk($symptomps, 7);
 
         $steps = [];
         $inputs = [];
