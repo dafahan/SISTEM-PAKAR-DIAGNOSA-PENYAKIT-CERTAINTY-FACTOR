@@ -2,8 +2,6 @@
 
 namespace App\Filament\User\Pages;
 
-use App\Models\Calculation as ModelsCalculation;
-use App\Models\Questionnaire;
 use App\Models\Symptom;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
