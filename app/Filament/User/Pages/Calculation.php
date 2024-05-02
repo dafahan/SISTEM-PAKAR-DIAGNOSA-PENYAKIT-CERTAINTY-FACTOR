@@ -29,7 +29,7 @@ class Calculation extends Page
 
     public function form(Form $form): Form
     {
-        $symptomps = Symptom::limit(4)->get()->toArray();
+        $symptomps = Symptom::all()->toArray();
 
         $chunks = array_chunk($symptomps, 4);
 
@@ -100,21 +100,14 @@ class Calculation extends Page
                 array_push($questionaireValue, $data[$answerKey]);
             }
 
-            $symptoms = Symptom::limit(4)->get();
+            $symptoms = Symptom::all();
 
             foreach ($symptoms as $key => $symptom) {
                 $symptom->value = $questionaireValue[$key];
             }
 
+            // Implement CF
             dd($symptoms);
-
-            // Calculate diabetes type based on symptoms
-
-            $calculationResult = ModelsCalculation::create(['user_id' => auth()->user()->id, 'result' => 'TYPE_1']);
-            foreach ($symptoms as $key => $item) {
-                $item['calculation_id'] = $calculationResult->id;
-                Questionnaire::create($item);
-            }
 
             Notification::make()
                 ->title('Saved successfully')
