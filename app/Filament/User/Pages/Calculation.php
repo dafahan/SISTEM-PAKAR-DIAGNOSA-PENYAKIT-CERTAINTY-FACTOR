@@ -156,10 +156,22 @@ class Calculation extends Page
             //dd($result);
     
             // Find disease with the highest score
-            $maxScoreDisease = collect($result)->max('score');
-            $maxScore = $maxScoreDisease['score'];
-            $disease = $maxScoreDisease['name'];
-    
+            $maxScore = -1;
+            $maxScoreDisease = null;
+            foreach ($result as $diseaseId => $diseaseInfo) {
+                if ($diseaseInfo['score'] > $maxScore) {
+                    $maxScore = $diseaseInfo['score'];
+                    $maxScoreDisease = $diseaseInfo;
+                }
+            }
+
+            // If a disease with the highest score is found, assign its name to $disease
+            if ($maxScoreDisease !== null) {
+                $disease = $maxScoreDisease['name'];
+            } else {
+                $disease = "Unknown"; // Set default value if no disease is found
+            }
+
             // Output the result
             //dd($disease, $maxScore);
     
