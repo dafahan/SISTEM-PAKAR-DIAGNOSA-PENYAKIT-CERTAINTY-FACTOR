@@ -16,6 +16,8 @@ return new class extends Migration
         Schema::create('symptoms', function (Blueprint $table) {
             $table->id();
             $table->string('name', 200);
+            $table->float('belief', 2);
+            $table->float('disbelief', 2)->virtualAs('1 - belief');
         });
 
         Schema::create('diseases', function (Blueprint $table) {
