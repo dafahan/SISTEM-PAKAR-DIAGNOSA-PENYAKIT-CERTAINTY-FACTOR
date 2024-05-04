@@ -91,112 +91,93 @@ class Calculation extends Page
     public function submit()
     {
         try {
-            $questionaireValue = [];
             $data = $this->data;
-
+    
+            // Extract answers from the questionnaire data
+            $questionnaireValues = [];
             for ($i = 0; $i < count($data) / 2; $i++) {
-                $answerKey = 'answer'.$i;
-                array_push($questionaireValue, $data[$answerKey]);
+                $answerKey = 'answer' . $i;
+                $questionnaireValues[] = doubleval($data[$answerKey]);
             }
-
+    
+            // Retrieve all symptoms
             $symptoms = Symptom::all();
+    
+            // Initialize $items array to store symptom values
             $items = [];
             foreach ($symptoms as $key => $symptom) {
-                // Create a new Symptom array with the desired attributes
-                $newSymptom = [
+                $items[$symptom->id] = [
                     'name' => $symptom->name,
-                    'value' => doubleval($questionaireValue[$key])*$symptom->belief,
+                    'value' => doubleval($questionnaireValues[$key]) * $symptom->belief,
                 ];
-
-                // Add the new Symptom array to the $items dictionary with the symptom ID as key
-                $items[$symptom->id] = $newSymptom;
             }
-            
+    
+            // Retrieve all diseases and initialize $combine array
             $diseases = Disease::pluck('name', 'id')->map(function ($name) {
                 return [$name, 0];
             })->toArray();
-            
-            // Get the keys of the diseases array
+    
+            // Initialize $combine array with keys same as $diseases
             $diseaseIds = array_keys($diseases);
-            $combine = [];
-                foreach ($diseaseIds as $diseaseId) {
-                    $combine[$diseaseId] = [];
-             } 
-            // Create $isFirstCombine array with keys same as $diseases and values set to 0
-            $isFirstCombine = array_combine($diseaseIds, array_fill(1, count($diseaseIds), 1));
-            $rules = Rule::all()->toArray();
-            $firstIndex = 0;
-           
-            foreach($rules as $index => $rule){
-                $disease_id = $rule['disease_id'];
-                if($isFirstCombine[$disease_id]==2){
-                    $combine[$disease_id][] = $items[$firstIndex]['value'] + $items[$rule['symptom_id']]['value'] * (1-$items[$firstIndex]['value']);
-                }else if($isFirstCombine[$disease_id]==1){
-                    $firstIndex = $rule['symptom_id'];
-                    $isFirstCombine[$disease_id] = 2 ;
-                }else{
-                    $tmp = end($combine[$disease_id]);
-                    $combine[$disease_id][] = $tmp + $items[$rule['symptom_id']]['value'] * (1-$tmp);
-                }
-
-            }
-            // Initialize the $result array
+            $combine = array_fill_keys($diseaseIds, []);
+    
+            // Initialize $result array to store disease names and scores
             $result = [];
-
-            // Iterate over each disease
+    
+            // Process rules and update $combine array
+            foreach (Rule::all()->toArray() as $rule) {
+                $diseaseId = $rule['disease_id'];
+                $symptomId = $rule['symptom_id'];
+                
+                if (!isset($items[$symptomId])) {
+                    continue; // Skip if symptom not found
+                }
+    
+                $value = $items[$symptomId]['value'];
+    
+                if (empty($combine[$diseaseId])) {
+                    $combine[$diseaseId][] = $value;
+                } else {
+                    $prevValue = end($combine[$diseaseId]);
+                    $combine[$diseaseId][] = $prevValue + $value * (1 - $prevValue);
+                }
+            }
+    
+            // Calculate scores and populate $result array
             foreach ($diseases as $diseaseId => $diseaseInfo) {
-                // Get the disease name and initial score from $diseaseInfo
-                $diseaseName = $diseaseInfo[0];
-                $initialScore = $diseaseInfo[1];
-
-                // Get the score from $combine using the disease ID
                 $scores = $combine[$diseaseId];
-                $score = end($scores) * 100; // Get the last score and multiply by 100
-
-                // Add the disease information to the $result array
+                $score = end($scores) * 100;
+    
                 $result[$diseaseId] = [
-                    'name' => $diseaseName,
+                    'name' => $diseaseInfo[0],
                     'score' => $score,
                 ];
             }
-
-            // Now $result contains the desired structure with disease names and scores
             //dd($result);
-            $maxScore = -1; // Initial value to ensure any positive score will be considered
-            $maxScoreDisease = null;
-
-            // Iterate over each disease in the $result array
-            foreach ($result as $diseaseId => $diseaseInfo) {
-                // Get the score of the current disease
-                $score = $diseaseInfo['score'];
-                
-                // Check if the current score is greater than the max score encountered so far
-                if ($score > $maxScore) {
-                    // If yes, update the max score and corresponding disease name
-                    $maxScore = $score;
-                    $maxScoreDisease = $diseaseInfo['name'];
-                }
-            }
-
-            // Now $maxScoreDisease contains the name of the disease with the highest score
-            // and $maxScore contains the corresponding score
-            $disease = $maxScoreDisease;
-            $score = $maxScore;
+    
+            // Find disease with the highest score
+            $maxScoreDisease = collect($result)->max('score');
+            $maxScore = $maxScoreDisease['score'];
+            $disease = $maxScoreDisease['name'];
+    
             // Output the result
-            //dd($disease, $score);
-            
+            //dd($disease, $maxScore);
+    
+            // Send success notification
             Notification::make()
                 ->title('Saved successfully')
                 ->success()
                 ->send();
-
+    
             $this->redirect(route('filament.user.pages.calculation'));
         } catch (\Throwable $th) {
+            // Log and send error notification
             dd($th);
             Notification::make()
-                ->title('An error occured while calculating the data')
+                ->title('An error occurred while calculating the data')
                 ->danger()
                 ->send();
         }
     }
+    
 }
