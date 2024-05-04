@@ -3,6 +3,8 @@
 namespace App\Filament\User\Pages;
 
 use App\Models\Symptom;
+use App\Models\Rule;
+use App\Models\Disease;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
@@ -52,7 +54,7 @@ class Calculation extends Page
                             '0.4' => '2',
                             '0.6' => '3',
                             '0.8' => '4',
-                            '0.1' => '5',
+                            '1.0' => '5',
                         ]),
                 ];
 
@@ -89,7 +91,6 @@ class Calculation extends Page
     public function submit()
     {
         try {
-            // Convert to associative array
             $questionaireValue = [];
             $data = $this->data;
 
@@ -99,14 +100,91 @@ class Calculation extends Page
             }
 
             $symptoms = Symptom::all();
-
+            $items = [];
             foreach ($symptoms as $key => $symptom) {
-                $symptom->value = $questionaireValue[$key];
+                // Create a new Symptom array with the desired attributes
+                $newSymptom = [
+                    'name' => $symptom->name,
+                    'value' => doubleval($questionaireValue[$key])*$symptom->belief,
+                ];
+
+                // Add the new Symptom array to the $items dictionary with the symptom ID as key
+                $items[$symptom->id] = $newSymptom;
+            }
+            
+            $diseases = Disease::pluck('name', 'id')->map(function ($name) {
+                return [$name, 0];
+            })->toArray();
+            
+            // Get the keys of the diseases array
+            $diseaseIds = array_keys($diseases);
+            $combine = [];
+                foreach ($diseaseIds as $diseaseId) {
+                    $combine[$diseaseId] = [];
+             } 
+            // Create $isFirstCombine array with keys same as $diseases and values set to 0
+            $isFirstCombine = array_combine($diseaseIds, array_fill(1, count($diseaseIds), 1));
+            $rules = Rule::all()->toArray();
+            $firstIndex = 0;
+           
+            foreach($rules as $index => $rule){
+                $disease_id = $rule['disease_id'];
+                if($isFirstCombine[$disease_id]==2){
+                    $combine[$disease_id][] = $items[$firstIndex]['value'] + $items[$rule['symptom_id']]['value'] * (1-$items[$firstIndex]['value']);
+                }else if($isFirstCombine[$disease_id]==1){
+                    $firstIndex = $rule['symptom_id'];
+                    $isFirstCombine[$disease_id] = 2 ;
+                }else{
+                    $tmp = end($combine[$disease_id]);
+                    $combine[$disease_id][] = $tmp + $items[$rule['symptom_id']]['value'] * (1-$tmp);
+                }
+
+            }
+            // Initialize the $result array
+            $result = [];
+
+            // Iterate over each disease
+            foreach ($diseases as $diseaseId => $diseaseInfo) {
+                // Get the disease name and initial score from $diseaseInfo
+                $diseaseName = $diseaseInfo[0];
+                $initialScore = $diseaseInfo[1];
+
+                // Get the score from $combine using the disease ID
+                $scores = $combine[$diseaseId];
+                $score = end($scores) * 100; // Get the last score and multiply by 100
+
+                // Add the disease information to the $result array
+                $result[$diseaseId] = [
+                    'name' => $diseaseName,
+                    'score' => $score,
+                ];
             }
 
-            // Implement CF
-            dd($symptoms);
+            // Now $result contains the desired structure with disease names and scores
+            //dd($result);
+            $maxScore = -1; // Initial value to ensure any positive score will be considered
+            $maxScoreDisease = null;
 
+            // Iterate over each disease in the $result array
+            foreach ($result as $diseaseId => $diseaseInfo) {
+                // Get the score of the current disease
+                $score = $diseaseInfo['score'];
+                
+                // Check if the current score is greater than the max score encountered so far
+                if ($score > $maxScore) {
+                    // If yes, update the max score and corresponding disease name
+                    $maxScore = $score;
+                    $maxScoreDisease = $diseaseInfo['name'];
+                }
+            }
+
+            // Now $maxScoreDisease contains the name of the disease with the highest score
+            // and $maxScore contains the corresponding score
+            $disease = $maxScoreDisease;
+            $score = $maxScore;
+            // Output the result
+            //dd($disease, $score);
+            
             Notification::make()
                 ->title('Saved successfully')
                 ->success()
