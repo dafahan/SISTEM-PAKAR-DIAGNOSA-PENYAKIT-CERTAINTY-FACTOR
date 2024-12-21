@@ -13,6 +13,8 @@ use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
+
 
 class Calculation extends Page
 {
@@ -88,12 +90,13 @@ class Calculation extends Page
             ->statePath('data');
     }
 
+
     public function submit()
     {
         try {
             $data = $this->data;
     
-            // Extract answers from the questionnaire data
+            // Process questionnaire data
             $questionnaireValues = [];
             for ($i = 0; $i < count($data) / 2; $i++) {
                 $answerKey = 'answer' . $i;
@@ -103,7 +106,7 @@ class Calculation extends Page
             // Retrieve all symptoms
             $symptoms = Symptom::all();
     
-            // Initialize $items array to store symptom values
+            // Prepare items
             $items = [];
             foreach ($symptoms as $key => $symptom) {
                 $items[$symptom->id] = [
@@ -112,29 +115,24 @@ class Calculation extends Page
                 ];
             }
     
-            // Retrieve all diseases and initialize $combine array
+            // Retrieve diseases and rules
             $diseases = Disease::pluck('name', 'id')->map(function ($name) {
                 return [$name, 0];
             })->toArray();
     
-            // Initialize $combine array with keys same as $diseases
-            $diseaseIds = array_keys($diseases);
-            $combine = array_fill_keys($diseaseIds, []);
-    
-            // Initialize $result array to store disease names and scores
+            $combine = array_fill_keys(array_keys($diseases), []);
             $result = [];
     
-            // Process rules and update $combine array
-            foreach (Rule::all()->toArray() as $rule) {
-                $diseaseId = $rule['disease_id'];
-                $symptomId = $rule['symptom_id'];
-                
+            // Apply rules to calculate disease probabilities
+            foreach (Rule::all() as $rule) {
+                $diseaseId = $rule->disease_id;
+                $symptomId = $rule->symptom_id;
+    
                 if (!isset($items[$symptomId])) {
-                    continue; // Skip if symptom not found
+                    continue;
                 }
     
                 $value = $items[$symptomId]['value'];
-    
                 if (empty($combine[$diseaseId])) {
                     $combine[$diseaseId][] = $value;
                 } else {
@@ -143,7 +141,7 @@ class Calculation extends Page
                 }
             }
     
-            // Calculate scores and populate $result array
+            // Calculate final scores
             foreach ($diseases as $diseaseId => $diseaseInfo) {
                 $scores = $combine[$diseaseId];
                 $score = end($scores) * 100;
@@ -153,9 +151,8 @@ class Calculation extends Page
                     'score' => $score,
                 ];
             }
-            //dd($result);
     
-            // Find disease with the highest score
+            // Determine the disease with the highest score
             $maxScore = -1;
             $maxScoreDisease = null;
             foreach ($result as $diseaseId => $diseaseInfo) {
@@ -164,32 +161,61 @@ class Calculation extends Page
                     $maxScoreDisease = $diseaseInfo;
                 }
             }
-
-            // If a disease with the highest score is found, assign its name to $disease
-            if ($maxScoreDisease !== null) {
-                $disease = $maxScoreDisease['name'];
-            } else {
-                $disease = "Unknown"; // Set default value if no disease is found
-            }
-
-            // Output the result
-            //dd($disease, $maxScore);
     
-            // Send success notification
+            // Default disease if no match is found
+            $diagnosedDisease = $maxScoreDisease ? $maxScoreDisease['name'] : 'Unknown';
+    
+            // Save the calculation history using raw query
+            $calculationId = DB::table('calculations')->insertGetId([
+                'user_id' => auth()->id(),
+                'disease_id' => $maxScoreDisease ? $diseaseId : null,
+                'value' => $maxScore,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+    
+            // Save detailed analysis
+            $details = [];
+            foreach ($result as $id => $diseaseInfo) {
+                $details[] = [
+                    'calculation_id' => $calculationId,
+                    'disease_id' => $id,
+                    'value' => $diseaseInfo['score'],
+                ];
+            }
+            DB::table('calculation_details')->insert($details);
+    
+            // Save questionnaire answers
+            $answers = [];
+            foreach ($data as $key => $value) {
+                if (str_starts_with($key, 'answer')) {
+                    $index = intval(substr($key, 6));
+                    $answers[] = [
+                        'calculation_id' => $calculationId,
+                        'symptom_id' => $data['symptom' . $index],
+                        'answer' => $value,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+            }
+    
+            // Redirect to history page with success notification
             Notification::make()
-                ->title('Saved successfully')
+                ->title('Calculation saved successfully!')
                 ->success()
                 ->send();
     
-            $this->redirect(route('filament.user.pages.calculation'));
+            return redirect()->route('filament.resources.history.index');
         } catch (\Throwable $th) {
-            // Log and send error notification
-            dd($th);
+            // Handle errors
             Notification::make()
-                ->title('An error occurred while calculating the data')
+                ->title('An error occurred while saving the calculation.')
                 ->danger()
                 ->send();
+            throw $th;
         }
     }
+    
     
 }
